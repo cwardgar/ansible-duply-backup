@@ -1,0 +1,70 @@
+---
+# TODO: Install boto for S3 backend.
+
+- name: Add repository from PPA and install its signing key.
+  apt_repository:
+    repo: 'ppa:duplicity-team/ppa'
+    update_cache: true
+
+- name: Install duplicity and required dependencies.
+  apt: "name={{ item }} state=latest"
+  with_items:
+    - duplicity
+    - curl  # For determining latest available version of duply.
+
+  # The Duply home directory will be something like: /opt/duply_2.0.2
+- name: Find existing Duply home directory.
+  find:
+    paths: "{{ duply_installation_dir }}"
+    file_type: directory
+    patterns: duply_*
+  register: find_output
+
+- name: Extract installed version of Duply from existing home directory path.
+  set_fact:
+    # regex_replace is a Jinja2 filter added by Ansible. See https://goo.gl/sF7quy.
+    # Also see http://docs.ansible.com/ansible/latest/playbooks_filters.html and grep for "regex_replace".
+    installed_duply_version: "{{ find_output.files[0].path | regex_replace('.*duply_([0-9.-]+)$', '\\1') }}"
+  when: find_output.matched > 0
+
+- name: Find latest download URL, following all redirects to final value.
+  # See https://stackoverflow.com/questions/3074288/get-url-after-redirect#comment71496988_5300429
+  command: curl --silent --location --head --output /dev/null --write-out '%{url_effective}' {{ duply_download_url }}
+  args:
+    # Without this, Ansible will warn: "Consider using get_url or uri module rather than running curl".
+    # However, those 2 modules can't do what we need here.
+    warn: false
+  register: curl_output
+  changed_when: false  # Task is purely informational; it doesn't change anything.
+
+  # The download URL will be something like:
+  #   https://phoenixnap.dl.sourceforge.net/project/ftplicity/duply%20%28simple%20duplicity%29/2.0.x/duply_2.0.2.tgz
+- name: Extract latest version of Duply from download URL.
+  set_fact:
+    latest_duply_version: "{{ curl_output.stdout | regex_replace('.*duply_([0-9.]+)\\.tgz$', '\\1') }}"
+  failed_when: not ( latest_duply_version | match('^[0-9.]+$') )  # Failed when we don't get a valid version string.
+
+- name: If an old version of duply is currently installed, delete it.
+  file:
+    path: "{{ duply_installation_dir }}/duply_{{ installed_duply_version }}"
+    state: absent
+  when: installed_duply_version is defined and installed_duply_version != latest_duply_version  # We have old version.
+
+- name: We know where Duply will be installed.
+  set_fact:
+    duply_home_dir: "{{ duply_installation_dir }}/duply_{{ latest_duply_version }}"
+
+- name: Download and unpack Duply.
+  unarchive:
+    src: "{{ duply_download_url }}"
+    dest: "{{ duply_installation_dir }}"
+    creates: "{{ duply_home_dir }}"
+    group: root
+    owner: root
+    remote_src: yes
+
+- name: Create Duply symlink in /usr/local/bin.
+  file:
+    src: "{{ duply_home_dir }}/duply"
+    dest: /usr/local/bin/duply
+    state: link

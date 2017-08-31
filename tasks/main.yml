@@ -1,5 +1,6 @@
 # tasks file for duply-backup
 ---
+- include: install.yml
 - include: configuration.yml
 - include: gpg.yml
 - include: jobs.yml
