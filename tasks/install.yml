@@ -27,7 +27,7 @@
 
 - name: Find latest download URL, following all redirects to final value.
   # See https://stackoverflow.com/questions/3074288/get-url-after-redirect#comment71496988_5300429
-  command: curl --silent --location --head --output /dev/null --write-out '%{url_effective}' {{ duply_download_url }}
+  command: curl --verbose --location --head --output /dev/null --write-out '%{url_effective}' {{ duply_download_url }}
   args:
     # Without this, Ansible will warn: "Consider using get_url or uri module rather than running curl".
     # However, those 2 modules can't do what we need here.
