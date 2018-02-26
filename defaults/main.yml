@@ -7,8 +7,3 @@ duply_backup_gpg_ownertrusts: []
 duply_backup_gpg_sec_keys: []
 
 duply_backup_jobs: []
-
-duply_installation_dir: /opt
-# The key/value pair on the end attempts to use the "gigenet" mirror, which is known to not suffer from the
-# TLS/SSL connect curl error (return code 35) that we sometimes get in the "Find latest download URL" task.
-duply_download_url: https://sourceforge.net/projects/ftplicity/files/latest/download?use_mirror=gigenet
