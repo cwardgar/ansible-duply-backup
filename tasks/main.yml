@@ -1,6 +1,6 @@
 # tasks file for duply-backup
 ---
-- include_tasks: install.yml
-- include_tasks: configuration.yml
-- include_tasks: gpg.yml
-- include_tasks: jobs.yml
+- import_tasks: install.yml
+- import_tasks: configuration.yml
+- import_tasks: gpg.yml
+- import_tasks: jobs.yml
