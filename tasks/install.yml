@@ -7,13 +7,8 @@
 - name: Install duplicity.
   apt: "name=duplicity state=latest"
 
-- name: Download duply.
-  get_url:
-    # This is the current development version. We do this because grabbing the latest release version from SourceForge
-    # turns out to be difficult and unreliable.
-    url: http://duply.net/tmp/duply.sh
+- name: Install duply.
+  copy:
+    src: duply
     dest: /usr/local/bin/duply
     mode: 0755
-    # Always download the file, even if dest already exists. Checksums are calculated and dest is replaced if
-    # checksums differ.
-    force: yes
